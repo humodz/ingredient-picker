@@ -16,7 +16,7 @@ export default class Tabs extends Vue {
           <!-- <span class="icon">
             <i class="fas fa-angle-left" aria-hidden="true"></i>
           </span> -->
-          <span>Restaurante</span>
+          <span>Início</span>
         </a>
       </li>
       <li>
@@ -24,7 +24,7 @@ export default class Tabs extends Vue {
           <!-- <span class="icon">
             <i class="fas fa-angle-up" aria-hidden="true"></i>
           </span> -->
-          <span>Cardápio</span>
+          <span>Filtrar</span>
         </a>
       </li>
       <li>

@@ -12,6 +12,6 @@ body {
 
 .scrollable {
     overflow-y: scroll;
-    max-height: calc(100vh - 8rem - 4rem - 1px);
+    scroll-behavior: smooth;
 }
   

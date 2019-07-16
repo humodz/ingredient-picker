@@ -16,11 +16,15 @@ export default class App extends Vue {
   likedIngredientCount = 0;
   dislikedIngredientCount = 0;
 
-  filteredFoodItems: FoodItem[] = [];
+  sortedFoodItems: FoodItem[] = [];
 
   constructor() {
     super();
-    this.ingredients = data.ingredients.sort().map<Ingredient>((ingr) => ({ name: ingr, status: 'neutral' }));
+    this.ingredients = data.ingredients.sort().map<Ingredient>((ingr) => ({
+      name: ingr,
+      status: 'neutral',
+      foodCount: 0,
+    }));
 
     const allIngredientsMap = new Map<string, Ingredient>();
 
@@ -36,8 +40,13 @@ export default class App extends Vue {
         ingredients: item.ingredients.map(ingrName => allIngredientsMap.get(ingrName) as Ingredient),
       }));
 
-    this.filteredFoodItems = this.foodItems;
-    console.log(this);
+    for (const item of this.foodItems) {
+      for (const ingr of item.ingredients) {
+        ingr.foodCount++;
+      }
+    }
+
+    this.sortedFoodItems = this.foodItems;
   }
 
   toggleStatus(ingr: Ingredient, what: 'like' | 'dislike') {
@@ -53,29 +62,49 @@ export default class App extends Vue {
       this.dislikedIngredientCount--;
     }
 
-    console.log('toggleStatus', this.likedIngredientCount);
     ingr.status = (ingr.status === what) ? 'neutral' : what;
-    this.filteredFoodItems = this.filterFoodItems();
+    this.sortedFoodItems = this.sortFoodItems();
   }
 
-  public filterFoodItems(): FoodItem[] {
-    console.log('filterFoodItems');
-
-    if (this.likedIngredientCount === 0 && this.dislikedIngredientCount === 0) {
-      return this.foodItems;
+  resetStatus(what: 'like' | 'dislike') {
+    if (what === 'like') {
+      this.likedIngredientCount = 0;
+    } else {
+      this.dislikedIngredientCount = 0;
     }
 
-    return this.foodItems.filter((item) => {
-      let shouldShow = (this.likedIngredientCount === 0);
+    for (const ingr of this.ingredients) {
+      if (ingr.status === what) {
+        ingr.status = 'neutral';
+      }
+    }
+
+    this.sortedFoodItems = this.sortFoodItems();
+  }
+
+  public sortFoodItems(): FoodItem[] {
+    function countStatuses(item: FoodItem) {
+      const r = { like: 0, dislike: 0, neutral: 0};
+
       for (const ingr of item.ingredients) {
-        if (ingr.status === 'dislike') {
-          return false;
-        } else if (ingr.status === 'like') {
-          shouldShow = true;
-        }
+        r[ingr.status]++;
       }
 
-      return shouldShow;
+      return r;
+    }
+
+    const strCmpOptions = { numeric: true, sensitivity: 'base' };
+
+    return Array.from(this.foodItems).sort((first, second) => {
+        const firstCount = countStatuses(first);
+        const secondCount = countStatuses(second);
+
+        const noDislikesFirst = +(firstCount.dislike > 0) - +(secondCount.dislike > 0);
+        const moreLikesFirst = secondCount.like - firstCount.like;
+        const lessDislikesFirst = firstCount.dislike - secondCount.dislike;
+        const orderAtoZ = first.name.localeCompare(second.name, undefined, strCmpOptions);
+
+        return noDislikesFirst || moreLikesFirst || lessDislikesFirst || orderAtoZ;
     });
   }
 }
@@ -91,13 +120,16 @@ export default class App extends Vue {
           <div class="column is-4">
             <IngredientList
               :ingredients="ingredients"
+              :likes="likedIngredientCount"
+              :dislikes="dislikedIngredientCount"
               @status-change="(ingr, status) => toggleStatus(ingr, status)"
+              @reset-likes="resetStatus('like')"
+              @reset-dislikes="resetStatus('dislike')"
             ></IngredientList>
           </div>
           <div class="column">
             <FoodItemList
-              :foodItems="filteredFoodItems"
-              :total="foodItems.length"
+              :foodItems="sortedFoodItems"
             ></FoodItemList>
           </div>
         </div>

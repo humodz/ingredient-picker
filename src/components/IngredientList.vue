@@ -3,15 +3,19 @@
   import Component from 'vue-class-component';
   import { Prop } from 'vue-property-decorator';
   import { Ingredient } from '../types/food';
+  import ResetLikesButtonGroup from './ResetLikesButtonGroup.vue';
 
-  @Component
+  @Component({
+    components: { ResetLikesButtonGroup },
+  })
   export default class IngredientList extends Vue {
     @Prop({ default: () => [] }) ingredients!: Ingredient[];
+    @Prop({ default: 0}) likes!: number;
+    @Prop({ default: 0 }) dislikes!: number;
 
     ingredientsFilterText = '';
 
     get filteredIngredients(): Ingredient[] {
-        console.log('filteredIngredients');
         const filterText = this.ingredientsFilterText.toLocaleLowerCase().trim();
 
         if (!filterText.length) {
@@ -24,7 +28,7 @@
 </script>
 
 <template>
-  <div>
+  <div class="ingredient-list">
     <div class="field">
       <div class="control">
         <input
@@ -35,6 +39,13 @@
         />
       </div>
     </div>
+
+    <ResetLikesButtonGroup
+      :likes="likes"
+      :dislikes="dislikes"
+      @reset-likes="$emit('reset-likes')"
+      @reset-dislikes="$emit('reset-dislikes')"
+    ></ResetLikesButtonGroup>
 
     <div class="panel scrollable">
       <div class="panel-block" v-for="ingr of filteredIngredients" :key="ingr.name">
@@ -53,12 +64,19 @@
           <i class="fas fa-thumbs-down"></i>
         </span>
         <span class="ingredient-name" :title="ingr.name">{{ ingr.name }}</span>
+        <span class="food-count">({{ ingr.foodCount }})</span>
       </div>
     </div>
   </div>
 </template>
 
 <style lang="scss">
+  @import "bulma/sass/utilities/initial-variables.sass";
+
+  .ingredient-list .scrollable {
+    max-height: calc(100vh - 8rem - 4rem - 1px - 3rem);
+  }
+
   .ingredient-btn {
     cursor: pointer;
   }
@@ -67,6 +85,17 @@
     white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
+
+    &::first-letter {
+      text-transform: uppercase;
+    }
+  }
+
+  .food-count {
+    white-space: nowrap;
+    margin-left: auto;
+    color: hsl(0, 0%, 40%);
+    font-size: 0.75rem;
   }
 </style>
 
